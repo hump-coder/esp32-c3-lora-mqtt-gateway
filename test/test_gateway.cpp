@@ -35,12 +35,25 @@ void test_relay_payload() {
   TEST_ASSERT_EQUAL_STRING("relay1:cmd:ON", packet.c_str());
 }
 
+void test_presence_tracking() {
+  DeviceRegistry reg;
+  reg.registerDevice("dev1", "relay", false, true);
+  TEST_ASSERT_TRUE(reg.shouldTrackPresence("dev1"));
+  TEST_ASSERT_TRUE(reg.isConnected("dev1"));
+  reg.setConnected("dev1", false);
+  TEST_ASSERT_FALSE(reg.isConnected("dev1"));
+  bool reconnected = reg.updateLastSeen("dev1");
+  TEST_ASSERT_TRUE(reconnected);
+  TEST_ASSERT_TRUE(reg.isConnected("dev1"));
+}
+
 void setup() {
   UNITY_BEGIN();
   RUN_TEST(test_device_registration);
   RUN_TEST(test_device_registration_ack);
   RUN_TEST(test_temperature_payload);
   RUN_TEST(test_relay_payload);
+  RUN_TEST(test_presence_tracking);
   UNITY_END();
 }
 
