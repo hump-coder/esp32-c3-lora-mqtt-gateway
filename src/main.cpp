@@ -39,12 +39,22 @@ void loop() {
       String payload = packet.substring(second + 1);
 
       if (msgType == "register") {
-        registry.registerDevice(deviceId, payload); // payload contains device type
+        bool requireAck = false;
+        String type = payload;
+        int comma = payload.indexOf(',');
+        if (comma > 0) {
+          type = payload.substring(0, comma);
+          String flag = payload.substring(comma + 1);
+          requireAck = (flag == "ack");
+        }
+        registry.registerDevice(deviceId, type, requireAck);
         mqtt.publishState(String("lora/") + deviceId + "/state", "registered");
       } else if (msgType == "data") {
         if (registry.isRegistered(deviceId)) {
           mqtt.publishState(String("lora/") + deviceId + "/state", payload);
         }
+      } else if (msgType == "ack") {
+        mqtt.handleAck(deviceId, payload);
       }
       mqtt.publishGatewayStats(lastRSSI, lastSNR);
     }

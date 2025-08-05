@@ -1,6 +1,8 @@
 #include "MqttHandler.h"
 #include "config.h"
 
+static const unsigned long ACTION_RETRY_INTERVAL = 5000;
+
 MqttHandler *MqttHandler::instance = nullptr;
 
 MqttHandler::MqttHandler(DeviceRegistry &registry, LoRaHandler &lora)
@@ -41,6 +43,7 @@ void MqttHandler::loop() {
     connectMqtt();
   }
   client.loop();
+  checkPending();
   unsigned long now = millis();
   if (now - lastStats > GATEWAY_STATS_INTERVAL) {
     publishGatewayStats(0, 0);
@@ -78,7 +81,39 @@ void MqttHandler::handleMessage(char *topic, byte *payload, unsigned int length)
   int first = t.indexOf('/');
   int second = t.indexOf('/', first + 1);
   String deviceId = t.substring(first + 1, second);
-  lora.sendPacket(deviceId + String(":cmd:") + data);
-  publishState(String("lora/") + deviceId + "/state", "cmd_sent");
+  String packet = deviceId + String(":cmd:") + data;
+  bool sent = lora.sendPacket(packet);
+  if (registry.isRegistered(deviceId) && registry.requiresAck(deviceId)) {
+    PendingAction action{packet, sent ? millis() : 0};
+    pending[deviceId]["cmd"] = action;
+  }
+  publishState(String("lora/") + deviceId + "/state", sent ? "cmd_sent" : "cmd_send_failed");
+}
+
+void MqttHandler::handleAck(const String &deviceId, const String &actionType) {
+  auto devIt = pending.find(deviceId);
+  if (devIt != pending.end()) {
+    auto actIt = devIt->second.find(actionType);
+    if (actIt != devIt->second.end()) {
+      devIt->second.erase(actIt);
+      if (devIt->second.empty()) {
+        pending.erase(devIt);
+      }
+      publishState(String("lora/") + deviceId + "/state", actionType + "_ack");
+    }
+  }
+}
+
+void MqttHandler::checkPending() {
+  unsigned long now = millis();
+  for (auto &dev : pending) {
+    for (auto &act : dev.second) {
+      PendingAction &pa = act.second;
+      if (now - pa.lastSent > ACTION_RETRY_INTERVAL) {
+        bool sent = lora.sendPacket(pa.packet);
+        pa.lastSent = sent ? now : 0;
+      }
+    }
+  }
 }
 

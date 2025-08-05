@@ -16,6 +16,12 @@ void test_device_registration() {
   TEST_ASSERT_EQUAL_STRING("temperature", reg.getType("temp1").c_str());
 }
 
+void test_device_registration_ack() {
+  DeviceRegistry reg;
+  reg.registerDevice("dev1", "relay", true);
+  TEST_ASSERT_TRUE(reg.requiresAck("dev1"));
+}
+
 void test_temperature_payload() {
   float t = 23.5f;
   String encoded = TemperatureSensorDevice::encode(t);
@@ -32,6 +38,7 @@ void test_relay_payload() {
 void setup() {
   UNITY_BEGIN();
   RUN_TEST(test_device_registration);
+  RUN_TEST(test_device_registration_ack);
   RUN_TEST(test_temperature_payload);
   RUN_TEST(test_relay_payload);
   UNITY_END();
