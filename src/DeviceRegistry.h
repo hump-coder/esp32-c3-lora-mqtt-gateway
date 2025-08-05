@@ -6,7 +6,7 @@
 
 struct RegisteredDevice {
   String id;
-  String type;
+  std::vector<String> sensors;
   bool requiresAck;
   bool trackPresence;
   bool connected;
@@ -15,10 +15,10 @@ struct RegisteredDevice {
 
 class DeviceRegistry {
  public:
-  void registerDevice(const String &id, const String &type, bool requiresAck = false,
-                      bool trackPresence = false);
+  void registerDevice(const String &id, const std::vector<String> &sensors,
+                      bool requiresAck = false, bool trackPresence = false);
   bool isRegistered(const String &id) const;
-  String getType(const String &id) const;
+  std::vector<String> getSensors(const String &id) const;
   bool requiresAck(const String &id) const;
   bool shouldTrackPresence(const String &id) const;
   bool isConnected(const String &id) const;

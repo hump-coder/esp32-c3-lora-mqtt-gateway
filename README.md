@@ -31,25 +31,26 @@ LoRa packets use a very small, colon separated layout:
 DEVICE_ID:MSG_TYPE:PAYLOAD
 ```
 
-Example registration packet from a temperature sensor:
+Example registration packet from a device with a temperature sensor and
+battery monitor:
 
 ```
-temp1:register:temperature
+temp1:register:temperature|battery
 ```
 
-Data packet from the same sensor:
+Data packet reporting the current temperature:
 
 ```
-temp1:data:23.5
+temp1:data:temperature=23.5
 ```
 
 ## MQTT topics
 
-For each registered device the gateway exposes two MQTT topics:
+For each registered sensor or actuator the gateway exposes two MQTT topics:
 
 ```
-lora/<device_id>/state   – published telemetry from the device
-lora/<device_id>/cmd     – subscribed commands sent to the device
+lora/<device_id>/<sensor>/state   – published telemetry from the device
+lora/<device_id>/<sensor>/cmd     – subscribed commands sent to the device
 ```
 
 Gateway diagnostics are published to:
