@@ -29,6 +29,7 @@ void MqttHandler::connectMqtt() {
   while (!client.connected()) {
     if (client.connect("lora-gateway", MQTT_USER, MQTT_PASSWORD)) {
       client.subscribe("lora/+/cmd");
+      client.subscribe("lora/+/+/cmd");
     } else {
       delay(1000);
     }
@@ -80,14 +81,29 @@ void MqttHandler::handleMessage(char *topic, byte *payload, unsigned int length)
   }
   int first = t.indexOf('/');
   int second = t.indexOf('/', first + 1);
+  int third = t.indexOf('/', second + 1);
   String deviceId = t.substring(first + 1, second);
-  String packet = deviceId + String(":cmd:") + data;
+  String sensor;
+  String packet;
+  if (third != -1) {
+    sensor = t.substring(second + 1, third);
+    packet = deviceId + String(":cmd:") + sensor + "=" + data;
+  } else {
+    packet = deviceId + String(":cmd:") + data;
+  }
   bool sent = lora.sendPacket(packet);
   if (registry.isRegistered(deviceId) && registry.requiresAck(deviceId)) {
     PendingAction action{packet, sent ? millis() : 0};
-    pending[deviceId]["cmd"] = action;
+    String key = sensor.length() ? sensor : String("cmd");
+    pending[deviceId][key] = action;
   }
-  publishState(String("lora/") + deviceId + "/state", sent ? "cmd_sent" : "cmd_send_failed");
+  if (sensor.length()) {
+    publishState(String("lora/") + deviceId + "/" + sensor + "/state",
+                 sent ? "cmd_sent" : "cmd_send_failed");
+  } else {
+    publishState(String("lora/") + deviceId + "/state",
+                 sent ? "cmd_sent" : "cmd_send_failed");
+  }
 }
 
 void MqttHandler::handleAck(const String &deviceId, const String &actionType) {
@@ -99,7 +115,8 @@ void MqttHandler::handleAck(const String &deviceId, const String &actionType) {
       if (devIt->second.empty()) {
         pending.erase(devIt);
       }
-      publishState(String("lora/") + deviceId + "/state", actionType + "_ack");
+      publishState(String("lora/") + deviceId + "/" + actionType + "/state",
+                   "cmd_ack");
     }
   }
 }

@@ -1,24 +1,24 @@
 #include <Arduino.h>
 #include <unity.h>
+#include <vector>
 #include "DeviceRegistry.h"
 #include "DeviceTypes/TemperatureSensorDevice.h"
 #include "DeviceTypes/RelayDevice.h"
 
 void test_device_registration() {
   DeviceRegistry reg;
-  String pkt = "temp1:register:temperature";
-  int first = pkt.indexOf(':');
-  int second = pkt.indexOf(':', first + 1);
-  String id = pkt.substring(0, first);
-  String type = pkt.substring(second + 1);
-  reg.registerDevice(id, type);
+  std::vector<String> sensors{"temperature", "battery"};
+  reg.registerDevice("temp1", sensors);
   TEST_ASSERT_TRUE(reg.isRegistered("temp1"));
-  TEST_ASSERT_EQUAL_STRING("temperature", reg.getType("temp1").c_str());
+  auto regsensors = reg.getSensors("temp1");
+  TEST_ASSERT_EQUAL(2, regsensors.size());
+  TEST_ASSERT_EQUAL_STRING("temperature", regsensors[0].c_str());
+  TEST_ASSERT_EQUAL_STRING("battery", regsensors[1].c_str());
 }
 
 void test_device_registration_ack() {
   DeviceRegistry reg;
-  reg.registerDevice("dev1", "relay", true);
+  reg.registerDevice("dev1", std::vector<String>{"relay"}, true);
   TEST_ASSERT_TRUE(reg.requiresAck("dev1"));
 }
 
@@ -37,7 +37,7 @@ void test_relay_payload() {
 
 void test_presence_tracking() {
   DeviceRegistry reg;
-  reg.registerDevice("dev1", "relay", false, true);
+  reg.registerDevice("dev1", std::vector<String>{"relay"}, false, true);
   TEST_ASSERT_TRUE(reg.shouldTrackPresence("dev1"));
   TEST_ASSERT_TRUE(reg.isConnected("dev1"));
   reg.setConnected("dev1", false);

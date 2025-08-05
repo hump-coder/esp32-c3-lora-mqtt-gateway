@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <vector>
 #include "config.h"
 #include "LoRaHandler.h"
 #include "MqttHandler.h"
@@ -42,15 +43,16 @@ void loop() {
       if (msgType == "register") {
         bool requireAck = false;
         bool trackPresence = false;
-        String type = payload;
+        String sensorsPart = payload;
         int comma = payload.indexOf(',');
         if (comma > 0) {
-          type = payload.substring(0, comma);
+          sensorsPart = payload.substring(0, comma);
           String flags = payload.substring(comma + 1);
           int start = 0;
           while (start >= 0) {
             int next = flags.indexOf(',', start);
-            String flag = next == -1 ? flags.substring(start) : flags.substring(start, next);
+            String flag = next == -1 ? flags.substring(start)
+                                     : flags.substring(start, next);
             if (flag == "ack") {
               requireAck = true;
             } else if (flag == "presence") {
@@ -60,7 +62,19 @@ void loop() {
             start = next + 1;
           }
         }
-        registry.registerDevice(deviceId, type, requireAck, trackPresence);
+        std::vector<String> sensors;
+        int start = 0;
+        while (start >= 0) {
+          int next = sensorsPart.indexOf('|', start);
+          String sensor = next == -1 ? sensorsPart.substring(start)
+                                     : sensorsPart.substring(start, next);
+          if (sensor.length() > 0) {
+            sensors.push_back(sensor);
+          }
+          if (next == -1) break;
+          start = next + 1;
+        }
+        registry.registerDevice(deviceId, sensors, requireAck, trackPresence);
         mqtt.publishState(String("lora/") + deviceId + "/state", "registered");
         if (trackPresence) {
           mqtt.publishState(String("lora/") + deviceId + "/state", "connected");
@@ -70,7 +84,14 @@ void loop() {
           if (registry.updateLastSeen(deviceId)) {
             mqtt.publishState(String("lora/") + deviceId + "/state", "connected");
           }
-          mqtt.publishState(String("lora/") + deviceId + "/state", payload);
+          int eq = payload.indexOf('=');
+          if (eq > 0) {
+            String sensor = payload.substring(0, eq);
+            String value = payload.substring(eq + 1);
+            mqtt.publishState(String("lora/") + deviceId + "/" + sensor +
+                                 "/state",
+                               value);
+          }
         }
       } else if (msgType == "ack") {
         if (registry.updateLastSeen(deviceId)) {

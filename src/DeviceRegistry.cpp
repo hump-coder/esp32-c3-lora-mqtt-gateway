@@ -1,8 +1,10 @@
 #include "DeviceRegistry.h"
 
-void DeviceRegistry::registerDevice(const String &id, const String &type,
+void DeviceRegistry::registerDevice(const String &id,
+                                    const std::vector<String> &sensors,
                                     bool requiresAck, bool trackPresence) {
-  RegisteredDevice dev{id, type, requiresAck, trackPresence, true, millis()};
+  RegisteredDevice dev{id, sensors, requiresAck, trackPresence, true,
+                       millis()};
   devices[id] = dev;
 }
 
@@ -10,12 +12,12 @@ bool DeviceRegistry::isRegistered(const String &id) const {
   return devices.find(id) != devices.end();
 }
 
-String DeviceRegistry::getType(const String &id) const {
+std::vector<String> DeviceRegistry::getSensors(const String &id) const {
   auto it = devices.find(id);
   if (it != devices.end()) {
-    return it->second.type;
+    return it->second.sensors;
   }
-  return String();
+  return {};
 }
 
 bool DeviceRegistry::requiresAck(const String &id) const {
