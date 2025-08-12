@@ -26,6 +26,7 @@ extern const float LORA_FREQ;
 extern const float LORA_BW;
 extern const uint8_t LORA_SF;
 extern const uint8_t LORA_CR;
+extern const uint8_t LORA_SYNC_WORD;
 
 // Gateway stats publish interval (ms)
 extern const uint32_t GATEWAY_STATS_INTERVAL;
