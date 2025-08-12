@@ -15,7 +15,7 @@ static const unsigned long PRESENCE_TIMEOUT = 60000;
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
+  delay(100);
   Serial.println("LoRa MQTT Gateway starting");
 
   if (lora.begin() != RADIOLIB_ERR_NONE) {
@@ -25,7 +25,10 @@ void setup() {
     }
   }
 
+  Serial.println("Setting up MQTT");
   mqtt.begin();
+  Serial.println("Setup complete");
+
 }
 
 void loop() {
@@ -33,6 +36,8 @@ void loop() {
 
   if (lora.available()) {
     String packet = lora.receivePacket(lastRSSI, lastSNR);
+    Serial.printf("READ: %s\n", packet.c_str());
+
     int first = packet.indexOf(':');
     int second = packet.indexOf(':', first + 1);
     if (first > 0 && second > first) {

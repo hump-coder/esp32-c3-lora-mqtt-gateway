@@ -7,6 +7,7 @@ LoRaHandler::LoRaHandler()
 
 int LoRaHandler::begin() {
   SPI.begin(LORA_SCK, LORA_MISO, LORA_MOSI, LORA_CS);
+  delay(200);
   int state = radio.begin(LORA_FREQ, LORA_BW, LORA_SF, LORA_CR);
   if (state == RADIOLIB_ERR_NONE) {
     radio.setDio1Action(nullptr);
