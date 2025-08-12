@@ -13,13 +13,13 @@ extern const char *MQTT_USER;
 extern const char *MQTT_PASSWORD;
 
 // LoRa radio pins (SX1262)
-#define LORA_MOSI 6
-#define LORA_MISO 5
-#define LORA_SCK 4
-#define LORA_CS 7
-#define LORA_RST 8
-#define LORA_BUSY 3
-#define LORA_DIO1 9
+#define LORA_MOSI 6 // [ green ]
+#define LORA_MISO 5 // [ blue ] 
+#define LORA_SCK 4 // [ purple ]
+#define LORA_CS 7 //(nss) [ gray ]
+#define LORA_RST 8 // [white]
+#define LORA_BUSY 3 // [yellow]
+#define LORA_DIO1 10 // [orange]
 
 // LoRa radio parameters
 extern const float LORA_FREQ;
