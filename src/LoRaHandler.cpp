@@ -10,6 +10,7 @@ int LoRaHandler::begin() {
   int state = radio.begin(LORA_FREQ, LORA_BW, LORA_SF, LORA_CR);
   if (state == RADIOLIB_ERR_NONE) {
     radio.setDio1Action(nullptr);
+    radio.setSyncWord(LORA_SYNC_WORD);
   }
   return state;
 }
